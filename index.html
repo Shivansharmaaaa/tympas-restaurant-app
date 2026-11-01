@@ -1,0 +1,2847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tympas - Fine Dining Restaurant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600&family=Allura&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --dark-bg: #0a0a0a;
+            --teal-bg: #1a3a3a;
+            --gold: #d4af37;
+            --light-gold: #f5e6c8;
+            --white: #ffffff;
+            --light-gray: #e5e5e5;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--dark-bg);
+            color: var(--white);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Vertical Lines with Beam Animation for Menu Columns */
+        .menu-column::before {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background: rgba(212, 175, 55, 0.15);
+            z-index: 1;
+        }
+
+        .menu-column::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 0;
+            width: 1px;
+            height: 30%;
+            background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.9), rgba(212, 175, 55, 0.9), transparent);
+            transform: translateY(var(--beam-position, -100%));
+            opacity: var(--beam-opacity, 0);
+            z-index: 2;
+            transition: opacity 0.3s ease;
+            will-change: transform;
+        }
+        
+        /* Hide beam on last column */
+        .menu-column:last-child::before,
+        .menu-column:last-child::after {
+            display: none;
+        }
+
+        /* Full Page Vertical Lines with Beam Animation - Only below text content */
+        .section-with-lines {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-with-lines .text-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Container for lines and beams - positioned below text content */
+        .lines-container {
+            position: relative;
+            flex: 1;
+            min-height: 300px;
+            width: 100%;
+            pointer-events: none;
+            z-index: 0;
+            margin-top: auto;
+        }
+
+        .lines-container::before,
+        .lines-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 1px;
+            height: 100%;
+            background: rgba(212, 175, 55, 0.1);
+            pointer-events: none;
+        }
+
+        .lines-container::before {
+            left: 33.333%;
+        }
+
+        .lines-container::after {
+            left: 66.666%;
+        }
+
+        /* Sleek beam indicator on each line - acts as scroll indicator (underlay) */
+        .section-line-beam {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 1.5px;
+            height: 100px;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(212, 175, 55, 0.2) 15%,
+                rgba(212, 175, 55, 0.5) 35%,
+                rgba(212, 175, 55, 0.5) 65%,
+                rgba(212, 175, 55, 0.2) 85%,
+                transparent 100%);
+            box-shadow: 0 0 4px rgba(212, 175, 55, 0.4),
+                        0 0 8px rgba(212, 175, 55, 0.25),
+                        0 0 12px rgba(212, 175, 55, 0.15);
+            pointer-events: none;
+            z-index: 1;
+            transform: translateX(-50%) translateY(var(--line-beam-position, 0px));
+            will-change: transform;
+        }
+        
+        .section-line-beam.left {
+            left: 33.333%;
+        }
+
+        .section-line-beam.right {
+            left: 66.666%;
+        }
+
+        /* Header/Navigation */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 25px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(10, 10, 10, 0.4);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(212, 175, 55, 0.05) 0%,
+                transparent 100%
+            );
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .header.scrolled {
+            background: rgba(10, 10, 10, 0.75);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            padding: 20px 60px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .header.scrolled::before {
+            opacity: 1;
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 300;
+            color: var(--gold);
+            letter-spacing: 4px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            opacity: 0.8;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-menu li {
+            position: relative;
+        }
+
+        .nav-menu a {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--gold);
+            transition: width 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            color: var(--gold);
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .nav-btn {
+            padding: 12px 35px;
+            border: 1px solid var(--gold);
+            background: transparent;
+            color: var(--gold);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: var(--gold);
+            color: var(--dark-bg);
+        }
+
+        .hamburger {
+            display: none;
+            width: 30px;
+            height: 24px;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger span {
+            width: 100%;
+            height: 2px;
+            background: var(--gold);
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 300px;
+            height: 100vh;
+            background: rgba(10, 10, 10, 0.75);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            padding: 100px 40px 40px;
+            z-index: 999;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 1px solid rgba(212, 175, 55, 0.15);
+            box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .mobile-menu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                rgba(212, 175, 55, 0.05) 0%,
+                transparent 100%
+            );
+            pointer-events: none;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .mobile-menu a {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+
+        .mobile-menu a:hover {
+            color: var(--gold);
+        }
+
+        .mobile-menu .nav-btn {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: var(--teal-bg);
+            overflow: hidden;
+            padding: 40px;
+            z-index: 1;
+        }
+
+        .hero-background {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            bottom: 40px;
+            width: calc(100% - 80px);
+            height: calc(100% - 80px);
+            z-index: 0;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            overflow: hidden;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+        }
+
+        .hero-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.5);
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        .hero-text-slide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            max-width: 1400px;
+            padding: 0 60px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-text-slide.active {
+            opacity: 1;
+        }
+
+        .hero-text-slide.fade-out {
+            opacity: 0;
+        }
+
+        .hero-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 80px;
+            font-weight: 300;
+            letter-spacing: 15px;
+            margin: 0;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .hero-subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 80px;
+            font-weight: 300;
+            letter-spacing: 15px;
+            margin: 15px 0 0 0;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .hero-description {
+            font-size: 14px;
+            letter-spacing: 4px;
+            margin-top: 40px;
+            font-weight: 400;
+            opacity: 0.85;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .hero-info {
+            position: absolute;
+            bottom: 80px;
+            left: 80px;
+            font-size: 13px;
+            letter-spacing: 2px;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1s;
+            z-index: 3;
+        }
+
+        .hero-info h4 {
+            font-weight: 400;
+            margin-bottom: 12px;
+            color: var(--gold);
+            font-size: 12px;
+        }
+
+        .hero-info p {
+            font-weight: 300;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .reserve-circle {
+            position: absolute;
+            bottom: 80px;
+            right: 80px;
+            width: 180px;
+            height: 180px;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.2s, rotate 20s linear infinite;
+            z-index: 3;
+        }
+
+        .reserve-circle:hover {
+            transform: scale(1.1);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .reserve-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-align: center;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Intro Section */
+        .intro-section {
+            padding: 150px 60px;
+            background: var(--teal-bg);
+            text-align: center;
+        }
+
+        .intro-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 40px;
+            opacity: 0.4;
+        }
+
+        .intro-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 48px;
+            font-weight: 400;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            max-width: 900px;
+            margin: 0 auto 30px;
+        }
+
+        .intro-tagline {
+            font-family: 'Allura', cursive;
+            font-size: 36px;
+            color: var(--gold);
+            font-weight: 400;
+        }
+
+        /* About Section - Removed (no longer used) */
+
+        .section-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            letter-spacing: 8px;
+            color: var(--light-gold);
+            margin-bottom: 30px;
+            display: block;
+            opacity: 0.7;
+            text-transform: lowercase;
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px;
+            font-weight: 400;
+            line-height: 1.3;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .section-text {
+            font-size: 15px;
+            line-height: 1.9;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+            margin-bottom: 40px;
+        }
+
+        .read-more {
+            display: inline-block;
+            padding: 15px 40px;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .read-more:hover {
+            background: var(--gold);
+            color: var(--dark-bg);
+        }
+
+        .about-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .about-image:hover {
+            transform: scale(1.05);
+        }
+
+        .image-container {
+            position: relative;
+            overflow: visible;
+            width: 100%;
+            height: 500px;
+        }
+
+        .image-main {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s ease;
+            display: block;
+        }
+        
+        .image-container .image-main {
+            clip-path: inset(0);
+        }
+
+        .image-float {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border: none;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+            transition: opacity 0.8s ease;
+            z-index: 10;
+            will-change: transform;
+            opacity: 0;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .image-float.left {
+            left: -90px;
+            bottom: -90px;
+            animation-delay: 0s;
+        }
+
+        .image-float.right {
+            right: -90px;
+            top: 50%;
+            animation-delay: 1s;
+        }
+
+        .image-float.bottom-left {
+            left: 30px;
+            bottom: 30px;
+            width: 240px;
+            height: 320px;
+            animation-delay: 0.5s;
+        }
+
+        .image-float.top-right {
+            right: 30px;
+            top: 30px;
+            width: 220px;
+            height: 220px;
+            animation-delay: 1.5s;
+        }
+
+        .image-float.visible {
+            opacity: 1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .about-col.text-only {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .image-container.visible .image-main {
+            transform: scale(1.03);
+         }
+
+         /* Chef's Section */
+         .chefs-section {
+             padding: 0;
+             background: var(--teal-bg);
+             overflow: hidden;
+             position: relative;
+         }
+
+         .chefs-container {
+             display: grid;
+             grid-template-columns: 1fr 1fr;
+             min-height: 100vh;
+         }
+
+         .chefs-text-col {
+             padding: 120px 80px;
+             display: flex;
+             flex-direction: column;
+             justify-content: center;
+             position: relative;
+             background: var(--teal-bg);
+         }
+
+         .chefs-bg-text {
+             position: absolute;
+             top: 50%;
+             left: -50px;
+             transform: translateY(-50%);
+             font-family: 'Cormorant Garamond', serif;
+             font-size: 180px;
+             font-weight: 300;
+             letter-spacing: 20px;
+             color: rgba(255, 255, 255, 0.05);
+             white-space: nowrap;
+             z-index: 0;
+             pointer-events: none;
+         }
+
+         .chefs-title {
+             font-family: 'Montserrat', sans-serif;
+             font-size: 38px;
+             font-weight: 500;
+             line-height: 1.4;
+             margin-bottom: 35px;
+             letter-spacing: 1px;
+             position: relative;
+             z-index: 1;
+             text-transform: uppercase;
+         }
+
+         .chefs-description {
+             font-size: 15px;
+             line-height: 1.9;
+             color: rgba(255, 255, 255, 0.85);
+             font-weight: 300;
+             margin-bottom: 40px;
+             position: relative;
+             z-index: 1;
+             max-width: 550px;
+         }
+
+         .chefs-image-col {
+             position: relative;
+             background: var(--teal-bg);
+             overflow: visible;
+         }
+
+         .chefs-image-wrapper {
+             position: relative;
+             width: 100%;
+             height: 100%;
+             padding: 60px;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+         }
+
+         .chefs-main-image {
+             width: 100%;
+             max-width: 650px;
+             height: auto;
+             aspect-ratio: 1;
+             object-fit: cover;
+             border-radius: 50%;
+             transition: transform 0.5s ease;
+         }
+
+         .chefs-main-image:hover {
+             transform: scale(1.02);
+         }
+
+         .chefs-float-image {
+             position: absolute;
+             left: 30px;
+             bottom: 80px;
+             width: 240px;
+             height: 320px;
+             object-fit: cover;
+             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+             transition: opacity 0.8s ease;
+             z-index: 10;
+             opacity: 0;
+             --parallax-offset: 0px;
+         }
+
+         .chefs-float-image.visible {
+             opacity: 1;
+             animation: float 6s ease-in-out infinite;
+             animation-delay: 0.8s;
+         }
+
+         .chefs-float-image:hover {
+             animation-play-state: paused;
+         }
+
+         @media (max-width: 968px) {
+             .chefs-container {
+                 grid-template-columns: 1fr;
+             }
+
+             .chefs-text-col {
+                 padding: 80px 40px;
+             }
+
+             .chefs-bg-text {
+                 font-size: 100px;
+                 left: -20px;
+             }
+
+             .chefs-title {
+                 font-size: 28px;
+             }
+
+             .chefs-image-wrapper {
+                 padding: 40px;
+             }
+
+             .chefs-float-image {
+                 width: 180px;
+                 height: 240px;
+                 left: 20px;
+                 bottom: 40px;
+             }
+         }
+
+        /* Featured Carousel Section */
+        .featured-carousel-section {
+            position: relative;
+            height: 70vh;
+            overflow: hidden;
+            background: var(--dark-bg);
+            z-index: 0;
+        }
+
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .carousel-slide.active {
+            pointer-events: auto;
+        }
+
+        .carousel-bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .carousel-bg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.35);
+            opacity: 0;
+            transform: scale(1);
+            transition: opacity 0.8s ease-in-out;
+            will-change: opacity, transform;
+        }
+
+        .carousel-slide.active .carousel-bg {
+            opacity: 1;
+            animation: kenBurns 15s ease-out forwards;
+        }
+
+        @keyframes kenBurns {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+            100% {
+                transform: scale(1.12) translate(-1%, -1%);
+            }
+        }
+
+        .carousel-text-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            max-width: 1800px;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 0 80px;
+            transform: translate(-50%, -50%) translateX(100%);
+            transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        .carousel-slide.active .carousel-text-wrapper {
+            transform: translate(-50%, -50%) translateX(0);
+        }
+
+        .carousel-side-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 60px;
+            font-weight: 300;
+            letter-spacing: 12px;
+            color: rgba(255, 255, 255, 0.12);
+            text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 0;
+            width: 300px;
+            text-align: center;
+        }
+
+        .carousel-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            position: relative;
+            flex-shrink: 0;
+            flex-grow: 1;
+        }
+
+        .carousel-line {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.3);
+            width: 150px;
+            flex-shrink: 0;
+            opacity: 0;
+            transform: scaleX(0);
+            transition: opacity 0.8s ease 0.4s, transform 0.8s ease 0.4s;
+        }
+
+        .carousel-line.left {
+            transform-origin: right;
+        }
+
+        .carousel-line.right {
+            transform-origin: left;
+        }
+
+        .carousel-slide.active .carousel-line {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        .carousel-main-content {
+            text-align: center;
+            padding: 0 50px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-main-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 65px;
+            font-weight: 300;
+            letter-spacing: 15px;
+            color: var(--white);
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            line-height: 1;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .carousel-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+            text-transform: capitalize;
+        }
+
+        .carousel-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 35px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: var(--white);
+            text-decoration: none;
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .carousel-btn:hover {
+            background: var(--white);
+            color: var(--teal-bg);
+            border-color: var(--white);
+        }
+
+        .carousel-indicators {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 3;
+        }
+
+        .carousel-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .carousel-indicator.active {
+            background: transparent;
+            border-color: var(--white);
+            transform: scale(1.2);
+        }
+
+        .carousel-top-button {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            padding: 15px 40px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: var(--white);
+            background: transparent;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 3;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 500;
+        }
+
+        .carousel-top-button:hover {
+            background: var(--white);
+            color: var(--teal-bg);
+            border-color: var(--white);
+        }
+
+        /* Menu Section */
+        .menu-section {
+            padding: 0;
+            background: var(--teal-bg);
+            position: relative;
+            z-index: 1;
+        }
+
+        .menu-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-bottom: 80px;
+            flex-wrap: wrap;
+        }
+
+        .menu-tab {
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+
+        .menu-tab:hover,
+        .menu-tab.active {
+            opacity: 1;
+        }
+
+        .menu-tab-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+        }
+
+        .menu-tab-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .menu-tab-sublabel {
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .menu-content {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            gap: 0;
+            background: var(--teal-bg);
+            max-width: 1800px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        .menu-image-column {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 60px;
+            overflow: hidden;
+        }
+
+        .menu-image-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 0;
+            padding-bottom: 100%;
+            overflow: hidden;
+            clip-path: ellipse(50% 45% at 50% 50%);
+            transition: clip-path 1.2s cubic-bezier(0.4, 0, 0.2, 1), padding-bottom 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .menu-image-wrapper.animate {
+            padding-bottom: 140%;
+            clip-path: ellipse(50% 50% at 50% 50%);
+        }
+
+        .menu-image-wrapper img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.15);
+            transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .menu-image-wrapper.animate img {
+            transform: scale(1);
+        }
+
+        .menu-column {
+            padding: 100px 80px;
+            background: var(--teal-bg);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .menu-category {
+            margin-bottom: 50px;
+        }
+
+        .menu-category-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            font-weight: 400;
+        }
+
+        .menu-item {
+            margin-bottom: 20px;
+            line-height: 1.8;
+            font-size: 14px;
+            font-weight: 300;
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .menu-item-price {
+            color: var(--gold);
+            margin-left: 15px;
+            font-weight: 400;
+        }
+
+        .entire-menu-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 18px 50px;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .entire-menu-btn:hover {
+            background: var(--gold);
+            color: var(--dark-bg);
+        }
+
+        /* Reservation Section */
+        .reservation-section {
+            padding: 120px 60px;
+            background: var(--dark-bg);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            position: relative;
+        }
+
+        .reservation-form {
+            background: var(--teal-bg);
+            padding: 80px;
+        }
+
+        .reservation-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            letter-spacing: 8px;
+            color: var(--gold);
+            margin-bottom: 30px;
+            display: block;
+        }
+
+        .reservation-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 48px;
+            font-weight: 400;
+            margin-bottom: 15px;
+        }
+
+        .reservation-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 50px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 18px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: var(--white);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .form-control option {
+            background: var(--dark-bg);
+        }
+
+        .book-btn {
+            width: 100%;
+            padding: 20px;
+            background: var(--gold);
+            color: var(--dark-bg);
+            border: none;
+            font-size: 13px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .book-btn:hover {
+            background: var(--light-gold);
+            transform: translateY(-2px);
+        }
+
+        .reservation-image {
+            position: relative;
+            height: 600px;
+            overflow: visible;
+            z-index: 1;
+        }
+
+        .reservation-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .reservation-image .image-container {
+            height: 600px;
+        }
+
+        .private-dining {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            background: rgba(10, 10, 10, 0.8);
+            padding: 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Events Section */
+        .events-section {
+            padding: 120px 60px;
+            background: var(--teal-bg);
+            position: relative;
+            z-index: 1;
+        }
+
+        .events-header {
+            text-align: center;
+            margin-bottom: 80px;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .event-card {
+            background: var(--dark-bg);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .event-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .event-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .event-content {
+            padding: 40px;
+        }
+
+        .event-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .event-date {
+            color: var(--gold);
+            font-size: 13px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .event-time {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Testimonials Section */
+        .testimonials-section {
+            padding: 120px 60px;
+            background: var(--dark-bg);
+            position: relative;
+        }
+
+        .testimonials-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .testimonials-label {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            letter-spacing: 8px;
+            color: var(--gold);
+            margin-bottom: 30px;
+            display: block;
+        }
+
+        .testimonials-slider {
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .testimonial {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .testimonial-text {
+            font-size: 18px;
+            line-height: 1.8;
+            font-weight: 300;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            color: var(--gold);
+        }
+
+        .slider-dots {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .slider-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .slider-dot.active {
+            background: var(--gold);
+        }
+
+        /* Gallery Section */
+        .gallery-section {
+            padding: 120px 0;
+            background: var(--teal-bg);
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 0 60px;
+        }
+
+        .gallery-scroll-container {
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .gallery-scroll-wrapper {
+            display: flex;
+            animation: scroll-left 40s linear infinite;
+            gap: 30px;
+        }
+
+        .gallery-scroll-wrapper:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes scroll-left {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .gallery-item {
+            min-width: 350px;
+            height: 350px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-hashtag {
+            text-align: center;
+            margin-top: 40px;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 60px;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 100px 60px 60px;
+            background: var(--dark-bg);
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 60px;
+            margin-bottom: 60px;
+            max-width: 1400px;
+            margin: 0 auto 60px;
+        }
+
+        .footer-section h5 {
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 20px;
+            text-transform: lowercase;
+        }
+
+        .footer-section p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        .footer-section a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--gold);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .footer-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 32px;
+            color: var(--gold);
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .social-links a {
+            color: var(--gold);
+            font-size: 14px;
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: var(--light-gold);
+        }
+
+        .copyright {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.8s ease;
+        }
+
+        .slide-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.8s ease;
+        }
+
+        .slide-in-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .nav {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .header {
+                padding: 20px 30px;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .logo-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .featured-carousel-section {
+                height: 60vh;
+            }
+
+            .carousel-text-wrapper {
+                padding: 0 20px;
+                max-width: 100%;
+            }
+
+            .carousel-side-text {
+                display: none;
+            }
+
+            .carousel-main-title {
+                font-size: 40px;
+                letter-spacing: 8px;
+                white-space: normal;
+            }
+
+            .carousel-subtitle {
+                font-size: 11px;
+            }
+
+            .carousel-btn {
+                margin-top: 25px;
+                padding: 10px 30px;
+                font-size: 9px;
+            }
+
+            .carousel-line {
+                width: 50px;
+            }
+
+            .carousel-main-content {
+                padding: 0 30px;
+            }
+
+            .carousel-center {
+                width: 100%;
+            }
+
+            .carousel-indicators {
+                bottom: 30px;
+            }
+
+            .carousel-top-button {
+                top: 20px;
+                right: 20px;
+                padding: 10px 25px;
+                font-size: 9px;
+            }
+
+            .header {
+                padding: 20px 30px;
+            }
+
+            .hero {
+                padding: 20px;
+            }
+
+            .hero-background {
+                top: 20px;
+                left: 20px;
+                right: 20px;
+                bottom: 20px;
+                width: calc(100% - 40px);
+                height: calc(100% - 40px);
+            }
+
+            .hero-text-slide {
+                padding: 0 30px;
+            }
+
+            .hero-title,
+            .hero-subtitle {
+                font-size: 40px;
+                letter-spacing: 8px;
+                line-height: 1.1;
+            }
+
+            .hero-subtitle {
+                margin-top: 10px;
+            }
+
+            .hero-description {
+                font-size: 11px;
+                letter-spacing: 2px;
+                margin-top: 25px;
+            }
+
+            .about-section,
+            .reservation-section,
+            .events-grid,
+            .gallery-grid,
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .menu-content {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .menu-image-column {
+                padding: 60px 40px;
+            }
+
+            .menu-image-wrapper {
+                max-width: 400px;
+            }
+
+            .menu-column {
+                padding: 60px 40px;
+            }
+
+            .hero-info {
+                position: static;
+                margin: 20px auto;
+                text-align: center;
+                left: auto;
+                bottom: auto;
+            }
+
+            .reserve-circle {
+                position: static;
+                margin: 30px auto;
+                right: auto;
+                bottom: auto;
+            }
+
+            .about-col {
+                padding: 60px 30px;
+            }
+
+            .menu-column {
+                padding: 40px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <a href="#home" class="logo">
+            <div class="logo-icon">★</div>
+            TYMPAS
+        </a>
+        <nav class="nav">
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#menu">Menu</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#events">Events</a></li>
+                <li><a href="#gallery">Gallery</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            <a href="#reservation" class="nav-btn">BOOK A TABLE</a>
+        </nav>
+        <div class="hamburger" id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="mobile-menu" id="mobileMenu">
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#menu">Menu</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#events">Events</a></li>
+                <li><a href="#gallery">Gallery</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="#reservation" class="nav-btn">BOOK A TABLE</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero with-lines">
+        <!-- Background Slideshow -->
+        <div class="hero-background">
+            <div class="hero-slide active">
+                <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&h=1080&fit=crop" alt="Fine Dining">
+            </div>
+            <div class="hero-slide">
+                <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1920&h=1080&fit=crop" alt="Gourmet Food">
+            </div>
+            <div class="hero-slide">
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920&h=1080&fit=crop" alt="Restaurant Ambiance">
+            </div>
+            <div class="hero-slide">
+                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1920&h=1080&fit=crop" alt="Culinary Excellence">
+            </div>
+        </div>
+
+        <!-- Text Slideshow -->
+        <div class="hero-content">
+            <div class="hero-text-slide active">
+                <h1 class="hero-title">GOOD TIMES</h1>
+                <h1 class="hero-subtitle">GREAT TASTES</h1>
+                <p class="hero-description">EXPERIENCE CULINARY EXCELLENCE</p>
+            </div>
+            <div class="hero-text-slide">
+                <h1 class="hero-title">FINE DINING</h1>
+                <h1 class="hero-subtitle">REDEFINED</h1>
+                <p class="hero-description">WHERE PASSION MEETS PERFECTION</p>
+            </div>
+            <div class="hero-text-slide">
+                <h1 class="hero-title">EXQUISITE</h1>
+                <h1 class="hero-subtitle">FLAVORS</h1>
+                <p class="hero-description">A JOURNEY FOR YOUR SENSES</p>
+            </div>
+            <div class="hero-text-slide">
+                <h1 class="hero-title">UNFORGETTABLE</h1>
+                <h1 class="hero-subtitle">MOMENTS</h1>
+                <p class="hero-description">CRAFTED WITH LOVE & PRECISION</p>
+            </div>
+        </div>
+
+        <div class="hero-info">
+            <h4>/ FIND US</h4>
+            <p>71 Madison Ave, New York,<br>NY 10016, +1 234 567 8900</p>
+        </div>
+        <div class="reserve-circle">
+            <div class="reserve-text">RESERVE<br>YOUR<br>TABLE</div>
+        </div>
+    </section>
+
+    <!-- Intro Section -->
+    <section class="intro-section section-with-lines fade-in">
+        <div class="text-content">
+        <svg class="intro-icon" viewBox="0 0 100 100" fill="none">
+            <circle cx="50" cy="30" r="20" stroke="#d4af37" stroke-width="0.5"/>
+            <path d="M 35 55 Q 50 70 65 55" stroke="#d4af37" stroke-width="0.5"/>
+        </svg>
+        <h3 class="intro-title">Tympas is for everyone who collects beautiful moments</h3>
+        <p class="intro-tagline">For the best memories</p>
+        </div>
+        <div class="lines-container">
+            <div class="section-line-beam left"></div>
+            <div class="section-line-beam right"></div>
+        </div>
+    </section>
+
+    <!-- Chef's Section - Text Left, Images Right -->
+    <section id="about" class="chefs-section with-lines">
+        <div class="section-lines">
+            <div class="section-line"></div>
+            <div class="section-line"></div>
+        </div>
+        <div class="chefs-container">
+            <div class="chefs-text-col fade-in">
+                <div class="chefs-bg-text">CHEF'S</div>
+                <h2 class="chefs-title">ONLY THE FINEST FOOD & GREAT SERVICE</h2>
+                <p class="chefs-description">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                <a href="#" class="read-more">READ MORE</a>
+            </div>
+            <div class="chefs-image-col fade-in">
+                <div class="chefs-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=800&fit=crop" alt="Gourmet dish" class="chefs-main-image">
+                    <img src="https://images.unsplash.com/photo-1577219491135-ce391730fb4c?w=300&h=400&fit=crop" alt="Chef portrait" class="chefs-float-image">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cuisine Section - Images Left, Text Right -->
+    <section class="chefs-section">
+        <div class="chefs-container" style="direction: rtl;">
+            <div class="chefs-text-col fade-in" style="direction: ltr;">
+                <span class="section-label">cuisine</span>
+                <h2 class="section-title">OUR GOALS & HISTORY</h2>
+                <p class="section-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labo et dolore magna aliqua. Ut enim ad mini veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea.</p>
+                <a href="#" class="read-more">READ MORE</a>
+            </div>
+            <div class="chefs-image-col fade-in" style="direction: ltr;">
+                <div class="chefs-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&h=800&fit=crop" alt="Wine tasting" class="chefs-main-image">
+                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=400&fit=crop" alt="Gourmet plate" class="chefs-float-image">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Carousel Section -->
+    <section class="featured-carousel-section with-lines">
+        <div class="section-lines">
+            <div class="section-line"></div>
+            <div class="section-line"></div>
+        </div>
+        <!-- Top Button -->
+        <button class="carousel-top-button">BOOK A TABLE</button>
+
+        <!-- Slide 1: Cocktails -->
+        <div class="carousel-slide active">
+            <div class="carousel-bg-container">
+                <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=1920&h=1080&fit=crop" alt="Cocktails" class="carousel-bg">
+            </div>
+            <div class="carousel-text-wrapper">
+                <div class="carousel-side-text">WINE</div>
+                <div class="carousel-center">
+                    <div class="carousel-line left"></div>
+                    <div class="carousel-main-content">
+                        <h2 class="carousel-main-title">COCKTAILS</h2>
+                        <p class="carousel-subtitle">Favorites</p>
+                        <a href="#menu" class="carousel-btn">VIEW</a>
+                    </div>
+                    <div class="carousel-line right"></div>
+                </div>
+                <div class="carousel-side-text">MENU</div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Menu -->
+        <div class="carousel-slide">
+            <div class="carousel-bg-container">
+                <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1920&h=1080&fit=crop" alt="Menu" class="carousel-bg">
+            </div>
+            <div class="carousel-text-wrapper">
+                <div class="carousel-side-text">COCKTAILS</div>
+                <div class="carousel-center">
+                    <div class="carousel-line left"></div>
+                    <div class="carousel-main-content">
+                        <h2 class="carousel-main-title">MENU</h2>
+                        <p class="carousel-subtitle">Main Courses</p>
+                        <a href="#menu" class="carousel-btn">VIEW</a>
+                    </div>
+                    <div class="carousel-line right"></div>
+                </div>
+                <div class="carousel-side-text">WINE</div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Wine List -->
+        <div class="carousel-slide">
+            <div class="carousel-bg-container">
+                <img src="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=1920&h=1080&fit=crop" alt="Wine List" class="carousel-bg">
+            </div>
+            <div class="carousel-text-wrapper">
+                <div class="carousel-side-text">MENU</div>
+                <div class="carousel-center">
+                    <div class="carousel-line left"></div>
+                    <div class="carousel-main-content">
+                        <h2 class="carousel-main-title">WINE LIST</h2>
+                        <p class="carousel-subtitle">Best Offer</p>
+                        <a href="#menu" class="carousel-btn">VIEW</a>
+                    </div>
+                    <div class="carousel-line right"></div>
+                </div>
+                <div class="carousel-side-text">COCKTAILS</div>
+            </div>
+        </div>
+
+        <!-- Indicators -->
+        <div class="carousel-indicators">
+            <div class="carousel-indicator active"></div>
+            <div class="carousel-indicator"></div>
+            <div class="carousel-indicator"></div>
+        </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section id="menu" class="menu-section section-with-lines">
+        <div class="text-content">
+        <!-- Menu Content -->
+        <div class="menu-content fade-in">
+            <!-- Left Image Column -->
+            <div class="menu-image-column">
+                <div class="menu-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&h=900&fit=crop" alt="Cocktail">
+                </div>
+            </div>
+            
+            <!-- Center Menu Column -->
+            <div class="menu-column">
+                <div class="menu-category">
+                    <h5 class="menu-category-title">homemade spreads</h5>
+                    <div class="menu-item">
+                        <span>White fish roe 'taramas'</span>
+                        <span class="menu-item-price">9€</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>Santorini Fava, split peas</span>
+                        <span class="menu-item-price">9€</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>Aubergine puree (Mount Athos recipe)</span>
+                        <span class="menu-item-price">8€</span>
+                    </div>
+                </div>
+                <div class="menu-category">
+                    <h5 class="menu-category-title">from the sea</h5>
+                    <div class="menu-item">
+                        <span>Grilled octopus</span>
+                        <span class="menu-item-price">18€</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>Octopus carpaccio with balsamic pearls and green apple</span>
+                        <span class="menu-item-price">18€</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>Steamed mussels with Asyrtiko wine sauce and fresh herbs</span>
+                        <span class="menu-item-price">15€</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>Mix of steamed sea shells with seafood bisque and red sauce</span>
+                        <span class="menu-item-price">18€</span>
+                    </div>
+                </div>
+                <div class="menu-category">
+                    <h5 class="menu-category-title">appetisers</h5>
+                    <div class="menu-item">
+                        <span>Chevre goat cheese with fig jam</span>
+                        <span class="menu-item-price">12€</span>
+                    </div>
+                    <div class="menu-item">
+                        <span>Feta cheese in homemade crust with olive jam</span>
+                        <span class="menu-item-price">9€</span>
+                    </div>
+                    </div>
+                    </div>
+            
+            <!-- Right Image Column -->
+            <div class="menu-image-column">
+                <div class="menu-image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=900&fit=crop" alt="Gourmet Food">
+            </div>
+        </div>
+        </div>
+            </div>
+        <div class="lines-container">
+            <div class="section-line-beam left"></div>
+            <div class="section-line-beam right"></div>
+        </div>
+    </section>
+
+    <!-- Reservation Section -->
+    <section id="reservation" class="reservation-section with-lines">
+        <div class="section-lines">
+            <div class="section-line"></div>
+            <div class="section-line"></div>
+        </div>
+        <div class="reservation-form fade-in">
+            <span class="reservation-label">reserve</span>
+            <h2 class="reservation-title">book a table</h2>
+            <p class="reservation-subtitle">*reservations recommended</p>
+            <form>
+                <div class="form-group">
+                    <select class="form-control">
+                        <option>1 Person</option>
+                        <option>2 People</option>
+                        <option>3 People</option>
+                        <option>4 People</option>
+                        <option>5 People</option>
+                        <option>6 People</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="date" class="form-control" value="2025-11-22">
+                </div>
+                <div class="form-group">
+                    <select class="form-control">
+                        <option>11:00 am</option>
+                        <option>12:00 pm</option>
+                        <option>01:00 pm</option>
+                        <option>02:00 pm</option>
+                        <option>06:00 pm</option>
+                        <option>07:00 pm</option>
+                        <option>08:00 pm</option>
+                        <option>09:00 pm</option>
+                    </select>
+                </div>
+                <button type="submit" class="book-btn">BOOK NOW</button>
+                <p class="reservation-subtitle" style="margin-top: 20px;">*Powered by OpenTable</p>
+            </form>
+        </div>
+        <div class="reservation-image fade-in">
+            <div class="image-container">
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=800&fit=crop" alt="Restaurant interior" class="image-main">
+                <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=200&h=200&fit=crop" alt="Food detail" class="image-float right">
+            </div>
+            <div class="private-dining">
+                <p>Book private dining & banquet rooms</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Events Section -->
+    <section id="events" class="events-section section-with-lines">
+        <div class="text-content">
+        <div class="events-header fade-in">
+            <h2 class="section-title">upcoming events</h2>
+            <p class="section-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor ut enim ad minim veniam, quis nostrud</p>
+        </div>
+        <div class="events-grid">
+            <div class="event-card fade-in">
+                <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&h=400&fit=crop" alt="Cocktails Night" class="event-image">
+                <div class="event-content">
+                    <h4 class="event-title">Cocktails Night</h4>
+                    <span class="event-date">Friday, 21 Nov</span>
+                    <p class="event-time">Reservations 12Pm To 1.30Pm</p>
+                </div>
+            </div>
+            <div class="event-card fade-in">
+                <img src="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&h=400&fit=crop" alt="Wine Wednesday" class="event-image">
+                <div class="event-content">
+                    <h4 class="event-title">Wine Wednesday</h4>
+                    <span class="event-date">Wednesday, 10 Sep</span>
+                    <p class="event-time">Reservations 1Pm To 3.30Pm</p>
+                </div>
+            </div>
+            <div class="event-card fade-in">
+                <img src="https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=400&fit=crop" alt="Sea Food & Wine" class="event-image">
+                <div class="event-content">
+                    <h4 class="event-title">Sea Food & Wine</h4>
+                    <span class="event-date">Friday, 18 Jul</span>
+                    <p class="event-time">Reservations 12.30Pm To 5Pm</p>
+                </div>
+            </div>
+        </div>
+        </div>
+        <div class="lines-container">
+            <div class="section-line-beam left"></div>
+            <div class="section-line-beam right"></div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section with-lines">
+        <div class="section-lines">
+            <div class="section-line"></div>
+            <div class="section-line"></div>
+        </div>
+        <div class="testimonials-header fade-in">
+            <p class="section-text">Our guests say about us</p>
+            <span class="testimonials-label">they say</span>
+        </div>
+        <div class="testimonials-slider fade-in">
+            <div class="testimonial">
+                <p class="testimonial-text">"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."</p>
+                <p class="testimonial-author">/ By Dora Johns</p>
+            </div>
+            <div class="slider-dots">
+                <div class="slider-dot active"></div>
+                <div class="slider-dot"></div>
+                <div class="slider-dot"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="gallery-section section-with-lines">
+        <div class="text-content">
+            <div class="gallery-header fade-in">
+                <h2 class="section-title">connect with us</h2>
+            </div>
+            <div class="gallery-scroll-container">
+            <div class="gallery-scroll-wrapper">
+                <!-- First set of images -->
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=400&fit=crop" alt="Gallery 1">
+            </div>
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=400&fit=crop" alt="Gallery 2">
+            </div>
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=400&fit=crop" alt="Gallery 3">
+            </div>
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=400&fit=crop" alt="Gallery 4">
+            </div>
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=400&fit=crop" alt="Gallery 5">
+            </div>
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop" alt="Gallery 6">
+            </div>
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&h=400&fit=crop" alt="Gallery 7">
+            </div>
+                <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=400&h=400&fit=crop" alt="Gallery 8">
+                </div>
+                <!-- Duplicate set for infinite scroll -->
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&h=400&fit=crop" alt="Gallery 1">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=400&fit=crop" alt="Gallery 2">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=400&fit=crop" alt="Gallery 3">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=400&fit=crop" alt="Gallery 4">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=400&fit=crop" alt="Gallery 5">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop" alt="Gallery 6">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&h=400&fit=crop" alt="Gallery 7">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=400&h=400&fit=crop" alt="Gallery 8">
+                </div>
+            </div>
+        </div>
+        <p class="gallery-hashtag fade-in">Inspired by you, always_#restaurante</p>
+        </div>
+        <div class="lines-container">
+            <div class="section-line-beam left"></div>
+            <div class="section-line-beam right"></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact" class="footer">
+        <div class="footer-content">
+            <div class="footer-section fade-in">
+                <h5>contact us</h5>
+                <p>
+                    T. <a href="tel:+123440567899">+12 344 0567899</a><br>
+                    M. <a href="mailto:info@tympas.com">info@tympas.com</a>
+                </p>
+            </div>
+            <div class="footer-section fade-in">
+                <h5>address</h5>
+                <p>
+                    Piazza Della Signoria, 12<br>
+                    21562 . Firenze . Italy
+                </p>
+            </div>
+            <div class="footer-section fade-in">
+                <h5>Opening hours</h5>
+                <p>
+                    Everyday : From 12.30 To 23.00<br>
+                    Kitchen Closes At 22.00
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="footer-logo fade-in">TYMPAS</div>
+            <div class="social-links fade-in">
+                <a href="#">PINTEREST</a>
+                <a href="#">FACEBOOK</a>
+                <a href="#">INSTAGRAM</a>
+            </div>
+            <p class="copyright fade-in">© 2025 TYMPAS RESTAURANT, ALL RIGHTS RESERVED</p>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu Toggle
+        const hamburger = document.getElementById('hamburger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (hamburger && mobileMenu) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+            mobileMenuLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburger.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!hamburger.contains(e.target) && !mobileMenu.contains(e.target)) {
+                    hamburger.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && href !== '#') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        const headerOffset = 80;
+                        const elementPosition = target.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                        window.scrollTo({
+                            top: offsetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+
+        // Featured Carousel
+        let currentCarouselSlide = 0;
+        const carouselSlides = document.querySelectorAll('.carousel-slide');
+        const carouselIndicators = document.querySelectorAll('.carousel-indicator');
+        const totalCarouselSlides = carouselSlides.length;
+        let carouselInterval;
+        let isCarouselTransitioning = false;
+
+        function changeCarouselSlide(direction) {
+            if (isCarouselTransitioning) return;
+            isCarouselTransitioning = true;
+
+            const oldSlideIndex = currentCarouselSlide;
+
+            // Calculate next slide
+            if (direction === 'next') {
+                currentCarouselSlide = (currentCarouselSlide + 1) % totalCarouselSlides;
+            } else if (direction === 'prev') {
+                currentCarouselSlide = (currentCarouselSlide - 1 + totalCarouselSlides) % totalCarouselSlides;
+            } else {
+                currentCarouselSlide = direction;
+            }
+
+            // Activate new slide and image immediately (before text animation)
+            carouselSlides[currentCarouselSlide].classList.add('active');
+            carouselIndicators[oldSlideIndex].classList.remove('active');
+            carouselIndicators[currentCarouselSlide].classList.add('active');
+
+            // Exit current text
+            const currentTextWrapper = carouselSlides[oldSlideIndex].querySelector('.carousel-text-wrapper');
+            currentTextWrapper.style.transform = 'translate(-50%, -50%) translateX(-100%)';
+            currentTextWrapper.style.transition = 'transform 0.8s cubic-bezier(0.65, 0, 0.35, 1)';
+
+            // Prepare next slide text (position off-screen)
+            const nextTextWrapper = carouselSlides[currentCarouselSlide].querySelector('.carousel-text-wrapper');
+            nextTextWrapper.style.transform = 'translate(-50%, -50%) translateX(100%)';
+            nextTextWrapper.style.transition = 'none';
+
+            // Animate new text in immediately (synchronized with image)
+            setTimeout(() => {
+                nextTextWrapper.style.transition = 'transform 1.2s cubic-bezier(0.65, 0, 0.35, 1)';
+                nextTextWrapper.style.transform = 'translate(-50%, -50%) translateX(0)';
+            }, 10);
+
+            // Remove old slide after transition completes
+            setTimeout(() => {
+                carouselSlides[oldSlideIndex].classList.remove('active');
+                // Reset old text position
+                currentTextWrapper.style.transition = 'none';
+                currentTextWrapper.style.transform = 'translate(-50%, -50%) translateX(100%)';
+                
+                isCarouselTransitioning = false;
+            }, 2000);
+
+            // Reset auto-play interval
+            clearInterval(carouselInterval);
+            startCarouselAutoPlay();
+        }
+
+        function startCarouselAutoPlay() {
+            carouselInterval = setInterval(() => {
+                changeCarouselSlide('next');
+            }, 6000);
+        }
+
+        // Initialize carousel
+        startCarouselAutoPlay();
+
+        // Indicator navigation
+        carouselIndicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => {
+                if (index !== currentCarouselSlide && !isCarouselTransitioning) {
+                    changeCarouselSlide(index);
+                }
+            });
+        });
+
+        // Keyboard navigation for carousel
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && !isCarouselTransitioning) {
+                changeCarouselSlide('prev');
+            } else if (e.key === 'ArrowRight' && !isCarouselTransitioning) {
+                changeCarouselSlide('next');
+            }
+        });
+
+        // Book a table button
+        document.querySelector('.carousel-top-button').addEventListener('click', () => {
+            document.querySelector('.reservation-section').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Hero Slideshow with Sequential Animation
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.hero-slide');
+        const textSlides = document.querySelectorAll('.hero-text-slide');
+        const totalSlides = slides.length;
+        let isTransitioning = false;
+
+        function changeSlide() {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            // Step 1: Fade out current text
+            textSlides[currentSlide].classList.add('fade-out');
+            textSlides[currentSlide].classList.remove('active');
+
+            // Step 2: After text fades out, change image
+            setTimeout(() => {
+                // Remove active from current image
+                slides[currentSlide].classList.remove('active');
+
+            // Move to next slide
+            currentSlide = (currentSlide + 1) % totalSlides;
+
+                // Activate new image
+            slides[currentSlide].classList.add('active');
+
+                // Step 3: After brief moment, fade in new text
+                setTimeout(() => {
+                    textSlides[currentSlide].classList.remove('fade-out');
+            textSlides[currentSlide].classList.add('active');
+                    isTransitioning = false;
+                }, 300);
+            }, 700); // Wait for text to fully fade out
+        }
+
+        // Change slide every 5 seconds
+        setInterval(changeSlide, 5000);
+
+        // Scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Image container animations
+        const imageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    // Add visible class to floating images
+                    const floatingImages = entry.target.querySelectorAll('.image-float');
+                    floatingImages.forEach(img => {
+                        img.classList.add('visible');
+                    });
+                }
+            });
+        }, {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        });
+
+        document.querySelectorAll('.image-container').forEach(container => {
+            imageObserver.observe(container);
+        });
+
+        // Observe chef's image wrapper for floating image
+        const chefsImageWrapper = document.querySelector('.chefs-image-wrapper');
+        if (chefsImageWrapper) {
+            const chefsObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const floatingImage = entry.target.querySelector('.chefs-float-image');
+                        if (floatingImage) {
+                            floatingImage.classList.add('visible');
+                        }
+                    }
+                });
+            }, {
+                threshold: 0.2,
+                rootMargin: '0px 0px -100px 0px'
+            });
+            chefsObserver.observe(chefsImageWrapper);
+        }
+
+        // Menu image expansion animation
+        const menuImageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, {
+            threshold: 0.3,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        document.querySelectorAll('.menu-image-wrapper').forEach(wrapper => {
+            menuImageObserver.observe(wrapper);
+        });
+
+        // Scroll-based reverse parallax for floating images
+        // Images move upward as you scroll down, downward as you scroll up
+        // Movement is proportional to scroll position
+        function updateFloatingImagesParallax() {
+            const scrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight;
+            const maxScroll = documentHeight - windowHeight;
+            
+            // Get all image containers with floating images
+            const containers = document.querySelectorAll('.image-container, .chefs-image-wrapper');
+            
+            containers.forEach(container => {
+                const floatingImages = container.querySelectorAll('.image-float, .chefs-float-image');
+                
+                if (floatingImages.length > 0) {
+                    const rect = container.getBoundingClientRect();
+                    const isInViewport = rect.top < windowHeight && rect.bottom > 0;
+                    
+                    if (isInViewport) {
+                        // Calculate scroll progress through entire page (0 to 1)
+                        const pageScrollProgress = maxScroll > 0 ? scrollY / maxScroll : 0;
+                        
+                        // Reverse parallax: as scrollY increases, images move up
+                        // Maximum vertical movement range: -200px to +200px
+                        const maxMovement = 200;
+                        const parallaxMultiplier = 0.4; // Controls how much images move per pixel scrolled
+                        
+                        // Calculate offset: negative because we want reverse parallax
+                        // At scrollY = 0, offset = 0
+                        // As scrollY increases, offset becomes more negative (moves up)
+                        const parallaxOffset = -(scrollY * parallaxMultiplier);
+                        
+                        // Clamp to maximum movement range
+                        const clampedOffset = Math.max(-maxMovement, Math.min(maxMovement, parallaxOffset));
+                        
+                        floatingImages.forEach(img => {
+                            // Apply the offset based on scroll position
+                            img.style.setProperty('--parallax-offset', `${clampedOffset}px`);
+                        });
+                    }
+                }
+            });
+        }
+
+        // Update parallax on scroll with throttling
+        let parallaxTicking = false;
+        window.addEventListener('scroll', () => {
+            if (!parallaxTicking) {
+                window.requestAnimationFrame(() => {
+                    updateFloatingImagesParallax();
+                    parallaxTicking = false;
+                });
+                parallaxTicking = true;
+            }
+        }, { passive: true });
+        
+        // Initial parallax update
+        updateFloatingImagesParallax();
+
+        // Gallery items sliding animation
+        const galleryObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const galleryItems = entry.target.querySelectorAll('.gallery-item');
+                    galleryItems.forEach(item => {
+                        item.classList.add('slide-up');
+                    });
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        const gallerySection = document.querySelector('.gallery-section');
+        if (gallerySection) {
+            galleryObserver.observe(gallerySection);
+        }
+
+        // Beam animation for menu columns
+        function updateMenuBeams() {
+         const menuSection = document.querySelector('.menu-section');
+            if (!menuSection) return;
+         
+             const scrollY = window.scrollY;
+             const windowHeight = window.innerHeight;
+            const sectionTop = menuSection.offsetTop;
+            const sectionHeight = menuSection.offsetHeight;
+                 const sectionBottom = sectionTop + sectionHeight;
+                 
+            // Check if menu section is in viewport
+                 if (scrollY + windowHeight > sectionTop && scrollY < sectionBottom + windowHeight) {
+                     // Calculate scroll progress through the section (0 to 1)
+                     const progress = Math.max(0, Math.min(1, 
+                         (scrollY + windowHeight - sectionTop) / (sectionHeight + windowHeight)
+                     ));
+                     
+                     // Map progress to beam position: -30% to 150% for full travel
+                     // This ensures the 30% tall beam fully exits from the bottom
+                     const translateY = -30 + (progress * 180);
+                     
+                const menuColumns = menuSection.querySelectorAll('.menu-column');
+                menuColumns.forEach((col, index) => {
+                         // Don't show beam on the last column's right edge
+                    if (index < menuColumns.length - 1) {
+                             col.style.setProperty('--beam-position', `${translateY}%`);
+                             col.style.setProperty('--beam-opacity', '1');
+                         } else {
+                             col.style.setProperty('--beam-opacity', '0');
+                         }
+                     });
+                 } else {
+                     // Reset beams when out of viewport
+                const menuColumns = menuSection.querySelectorAll('.menu-column');
+                menuColumns.forEach(col => {
+                         col.style.setProperty('--beam-opacity', '0');
+                     });
+                 }
+        }
+
+        // Section Beam Animation - sleek beam that moves smoothly with scroll speed
+        let lastScrollY = window.scrollY;
+        let scrollVelocity = 0;
+        
+        function updateSectionBeams() {
+            const currentScrollY = window.scrollY;
+            const windowHeight = window.innerHeight;
+            const sectionsWithLines = document.querySelectorAll('.section-with-lines');
+            
+            // Calculate scroll velocity for smooth movement
+            const deltaY = currentScrollY - lastScrollY;
+            scrollVelocity = deltaY;
+            lastScrollY = currentScrollY;
+            
+            sectionsWithLines.forEach(section => {
+                const linesContainer = section.querySelector('.lines-container');
+                if (!linesContainer) return;
+                
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionBottom = sectionTop + sectionHeight;
+                const linesContainerTop = linesContainer.offsetTop;
+                const linesContainerHeight = linesContainer.offsetHeight;
+                const beams = section.querySelectorAll('.section-line-beam');
+                
+                // Calculate scroll progress through the lines-container area (0 to 1)
+                // Container starts when it enters viewport, ends when it fully exits
+                const containerStart = linesContainerTop - windowHeight;
+                const containerEnd = linesContainerTop + linesContainerHeight;
+                const containerRange = containerEnd - containerStart;
+                
+                // Calculate progress: where are we in the container's scroll journey
+                let progress = 0;
+                if (currentScrollY >= containerStart && currentScrollY <= containerEnd) {
+                    progress = (currentScrollY - containerStart) / containerRange;
+                } else if (currentScrollY < containerStart) {
+                    progress = 0;
+                } else {
+                    progress = 1;
+                }
+                
+                // Clamp progress between 0 and 1
+                progress = Math.max(0, Math.min(1, progress));
+                
+                // Map progress to beam position within lines-container
+                // Beam travels from top (0) to bottom (containerHeight - beamHeight) of the container
+                const beamHeight = 100;
+                const maxPosition = linesContainerHeight - beamHeight;
+                const beamPosition = progress * maxPosition;
+                
+                // Update beam positions instantly (no transition delay for speed matching)
+                beams.forEach(beam => {
+                    beam.style.setProperty('--line-beam-position', `${beamPosition}px`);
+                });
+            });
+        }
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            const currentScrollY = window.scrollY;
+            
+            // Header scroll effect
+            if (currentScrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+            
+            // Update beam animations
+            updateMenuBeams();
+            updateSectionBeams();
+        }, { passive: true });
+        
+        // Initial beam positions
+        updateMenuBeams();
+        updateSectionBeams();
+
+        // Reserve circle click
+        document.querySelector('.reserve-circle').addEventListener('click', () => {
+            document.querySelector('.reservation-section').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Form submission
+        document.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Table reservation submitted! We will contact you shortly.');
+        });
+    </script>
+</body>
+</html>
+
+
+
